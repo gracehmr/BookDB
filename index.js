@@ -2,20 +2,32 @@ require ("dotenv").config();
 
 const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
+const { connection } = require("./connection");
+const { Book } = require("./models");
 const argv = yargs(hideBin(process.argv)).argv;
-const {add, list, edit, remove} = require("./utils");
+const {add, list, update, remove} = require("./utils/");
 
-
-//function that shows what data is accessed with each action
-const main = () => {
-    if (argv.add) {
-        add(argv.title, argv.author, argv.genre);
-    } else if (argv.edit) {
-        edit(argv.id, argv.title, argv.author, argv.genre);
+const main = async () => {
+    try {
+        await connection.authenticate();
+        await Book.sync({alter: true});
+        console.log(`Connection to ${process.env.DB_HOST} established`)
+        
+        if (argv.add) {
+        await add(argv.title, argv.author, argv.genre);
     } else if (argv.list) {
-        list(argv.title, argv.author, argv.genre);
+        await list();
     } else if (argv.remove) {
-        remove(argv.id);
+        await remove(argv.id);
+    } else if (argv.update) {
+      await update(argv.id, argv.title, argv.author, argv.genre);
     }
+        await connection.close();
+    } catch (error) {
+        console.error(`Unable to connect to the DB ${error}`);
+    }
+    
+    process.exit();
 }
+
 main();
