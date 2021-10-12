@@ -3,24 +3,26 @@ require ("dotenv").config();
 const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
 const { connection } = require("./connection");
-const { Book } = require("./models");
-const argv = yargs(hideBin(process.argv)).argv;
+const { Author, Genre, Book } = require("./models");
 const {add, list, update, remove} = require("./utils/");
+
+const argv = yargs(hideBin(process.argv)).argv;
 
 const main = async () => {
     try {
         await connection.authenticate();
+        await Author.sync({alter: true});
+        await Genre.sync({alter: true});
         await Book.sync({alter: true});
-        console.log(`Connection to ${process.env.DB_HOST} established`)
         
-        if (argv.add) {
-        await add(argv.title, argv.author, argv.genre);
+    if (argv.add) {
+        await add(argv);
     } else if (argv.list) {
-        await list();
-    } else if (argv.remove) {
-        await remove(argv.id);
-    } else if (argv.update) {
-      await update(argv.id, argv.title, argv.author, argv.genre);
+        await list(argv);
+    } else if (argv.remove && argv.id) {
+        await remove(argv);
+    } else if (argv.update && argv.id) {
+      await update(argv);
     }
         await connection.close();
     } catch (error) {
